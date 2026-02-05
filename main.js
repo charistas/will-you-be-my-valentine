@@ -1,3 +1,6 @@
+// Detect mobile device
+const isMobile = window.matchMedia('(max-width: 600px)').matches || 'ontouchstart' in window;
+
 // Get name from URL parameter
 const params = new URLSearchParams(window.location.search);
 const name = params.get('name');
@@ -39,19 +42,22 @@ function escapeButton() {
   const cardRect = card.getBoundingClientRect();
   const buttonRect = button.getBoundingClientRect();
 
-  // Calculate bounds within the card
-  const maxX = cardRect.width - buttonRect.width - 40;
-  const maxY = cardRect.height - buttonRect.height - 40;
+  // Tighter bounds on mobile to keep button visible and reachable
+  const padding = isMobile ? 20 : 40;
+  const maxX = cardRect.width - buttonRect.width - padding;
+  const maxY = cardRect.height - buttonRect.height - padding;
 
-  // Random position within card bounds
-  const randomX = Math.random() * maxX - maxX / 2;
-  const randomY = Math.random() * maxY / 2;
+  // Smaller movement range on mobile
+  const rangeMultiplier = isMobile ? 0.6 : 1;
+  const randomX = (Math.random() * maxX - maxX / 2) * rangeMultiplier;
+  const randomY = (Math.random() * maxY / 2) * rangeMultiplier;
 
   button.style.transform = `translate(${randomX}px, ${randomY}px)`;
 
-  // Make button smaller after several escapes
-  if (escapeCount > 3) {
-    const scale = Math.max(0.5, 1 - (escapeCount - 3) * 0.1);
+  // Make button smaller after several escapes (less aggressive on mobile)
+  const shrinkThreshold = isMobile ? 5 : 3;
+  if (escapeCount > shrinkThreshold) {
+    const scale = Math.max(0.6, 1 - (escapeCount - shrinkThreshold) * 0.08);
     button.style.transform = `translate(${randomX}px, ${randomY}px) scale(${scale})`;
   }
 
@@ -72,7 +78,7 @@ btnNo.addEventListener('mouseenter', escapeButton);
 btnNo.addEventListener('touchstart', (e) => {
   e.preventDefault();
   escapeButton();
-});
+}, { passive: false });
 btnNo.addEventListener('click', (e) => {
   e.preventDefault();
   escapeButton();
@@ -94,7 +100,14 @@ const celebrationGifs = [
 btnYes.addEventListener('click', () => {
   // Pick a random GIF
   const randomGif = celebrationGifs[Math.floor(Math.random() * celebrationGifs.length)];
-  document.querySelector('.celebration-gif').src = randomGif;
+  const gifImg = document.querySelector('.celebration-gif');
+
+  // Add loading state
+  gifImg.style.opacity = '0';
+  gifImg.src = randomGif;
+  gifImg.onload = () => {
+    gifImg.style.opacity = '1';
+  };
 
   card.classList.add('celebrating');
   celebration.classList.add('show');
@@ -105,6 +118,9 @@ btnYes.addEventListener('click', () => {
 const confettiPieces = [];
 const colors = ['#e91e63', '#ff4081', '#f50057', '#ff80ab', '#fce4ec', '#ffeb3b', '#4caf50'];
 
+// Fewer particles on mobile for better performance
+const confettiCount = isMobile ? 60 : 150;
+
 class ConfettiPiece {
   constructor() {
     this.reset();
@@ -113,7 +129,7 @@ class ConfettiPiece {
   reset() {
     this.x = Math.random() * canvas.width;
     this.y = -20;
-    this.size = Math.random() * 10 + 5;
+    this.size = Math.random() * (isMobile ? 8 : 10) + (isMobile ? 4 : 5);
     this.color = colors[Math.floor(Math.random() * colors.length)];
     this.speedY = Math.random() * 3 + 2;
     this.speedX = Math.random() * 2 - 1;
@@ -147,7 +163,7 @@ let animationId = null;
 
 function startConfetti() {
   // Create confetti pieces
-  for (let i = 0; i < 150; i++) {
+  for (let i = 0; i < confettiCount; i++) {
     const piece = new ConfettiPiece();
     piece.y = Math.random() * canvas.height; // Scatter initial positions
     confettiPieces.push(piece);
