@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Will you be my Valentine?</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <div class="cat">
+        <div class="cat-ear cat-ear-left"></div>
+        <div class="cat-ear cat-ear-right"></div>
+        <div class="cat-face">
+          <div class="cat-eye cat-eye-left"></div>
+          <div class="cat-eye cat-eye-right"></div>
+          <div class="cat-nose"></div>
+        </div>
+        <div class="cat-heart">❤️</div>
+      </div>
+
+      <h1 class="question"><span id="name">My love</span>, will you be my valentine?</h1>
+
+      <div class="buttons" id="buttons">
+        <button class="btn btn-yes" id="btn-yes">Yes</button>
+        <button class="btn btn-no" id="btn-no">No</button>
+      </div>
+
+      <p class="hint" id="hint">"No" seems a bit shy 🙈</p>
+
+      <div class="celebration" id="celebration">
+        <p class="yay">Best decision ever! 🎉</p>
+        <img src="celebration.gif" alt="Celebration!" class="celebration-gif">
+      </div>
+    </div>
+  </div>
+
+  <canvas id="confetti"></canvas>
+
+  <script src="main.js"></script>
+</body>
+</html>
