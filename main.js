@@ -16,6 +16,7 @@ const hint = document.getElementById('hint');
 const celebration = document.getElementById('celebration');
 const canvas = document.getElementById('confetti');
 const ctx = canvas.getContext('2d');
+const btnShare = document.getElementById('btn-share');
 
 // Resize canvas
 function resizeCanvas() {
@@ -34,31 +35,37 @@ function escapeButton() {
 
   const button = btnNo;
 
-  // Switch to absolute positioning on first escape
+  // Switch to fixed positioning on first escape
   if (!button.classList.contains('escaping')) {
     button.classList.add('escaping');
   }
 
-  const cardRect = card.getBoundingClientRect();
   const buttonRect = button.getBoundingClientRect();
 
-  // Tighter bounds on mobile to keep button visible and reachable
-  const padding = isMobile ? 20 : 40;
-  const maxX = cardRect.width - buttonRect.width - padding;
-  const maxY = cardRect.height - buttonRect.height - padding;
+  // Padding from screen edges
+  const padding = isMobile ? 15 : 20;
 
-  // Smaller movement range on mobile
-  const rangeMultiplier = isMobile ? 0.6 : 1;
-  const randomX = (Math.random() * maxX - maxX / 2) * rangeMultiplier;
-  const randomY = (Math.random() * maxY / 2) * rangeMultiplier;
+  // Calculate valid position range within the viewport
+  const minX = padding;
+  const maxX = window.innerWidth - buttonRect.width - padding;
+  const minY = padding;
+  const maxY = window.innerHeight - buttonRect.height - padding;
 
-  button.style.transform = `translate(${randomX}px, ${randomY}px)`;
+  // Random position within viewport bounds
+  const randomX = minX + Math.random() * (maxX - minX);
+  const randomY = minY + Math.random() * (maxY - minY);
+
+  // Use left/top positioning for fixed element
+  button.style.left = `${randomX}px`;
+  button.style.top = `${randomY}px`;
 
   // Make button smaller after several escapes (less aggressive on mobile)
   const shrinkThreshold = isMobile ? 5 : 3;
   if (escapeCount > shrinkThreshold) {
     const scale = Math.max(0.6, 1 - (escapeCount - shrinkThreshold) * 0.08);
-    button.style.transform = `translate(${randomX}px, ${randomY}px) scale(${scale})`;
+    button.style.transform = `scale(${scale})`;
+  } else {
+    button.style.transform = '';
   }
 
   // Update hint text based on escape count
@@ -96,6 +103,17 @@ const celebrationGifs = [
   'https://media1.giphy.com/media/bMLGNRoAy0Yko/giphy.gif',
 ];
 
+// Preload GIFs in background
+const preloadedGifs = [];
+function preloadGifs() {
+  celebrationGifs.forEach(url => {
+    const img = new Image();
+    img.src = url;
+    preloadedGifs.push(img);
+  });
+}
+preloadGifs();
+
 // Yes button click - celebrate!
 btnYes.addEventListener('click', () => {
   // Pick a random GIF
@@ -112,6 +130,39 @@ btnYes.addEventListener('click', () => {
   card.classList.add('celebrating');
   celebration.classList.add('show');
   startConfetti();
+});
+
+// Share button - copy link or use native share
+btnShare.addEventListener('click', async () => {
+  const shareUrl = window.location.origin + window.location.pathname;
+  const shareData = {
+    title: 'Will you be my Valentine?',
+    text: 'Someone wants to ask you something special...',
+    url: shareUrl,
+  };
+
+  try {
+    if (navigator.share && isMobile) {
+      await navigator.share(shareData);
+    } else {
+      await navigator.clipboard.writeText(shareUrl);
+      btnShare.textContent = 'Link copied! 📋';
+      setTimeout(() => {
+        btnShare.textContent = 'Share with a friend 💌';
+      }, 2000);
+    }
+  } catch (err) {
+    // Fallback: copy to clipboard
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      btnShare.textContent = 'Link copied! 📋';
+      setTimeout(() => {
+        btnShare.textContent = 'Share with a friend 💌';
+      }, 2000);
+    } catch {
+      btnShare.textContent = 'Copy: ' + shareUrl;
+    }
+  }
 });
 
 // Confetti animation
