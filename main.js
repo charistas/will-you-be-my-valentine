@@ -16,7 +16,7 @@ const hint = document.getElementById('hint');
 const celebration = document.getElementById('celebration');
 const canvas = document.getElementById('confetti');
 const ctx = canvas.getContext('2d');
-const btnShare = document.getElementById('btn-share');
+const btnSend = document.getElementById('btn-send');
 
 // Resize canvas
 function resizeCanvas() {
@@ -133,7 +133,7 @@ btnYes.addEventListener('click', () => {
 });
 
 // Share button - copy link or use native share
-btnShare.addEventListener('click', async () => {
+btnSend.addEventListener('click', async () => {
   const shareUrl = window.location.origin + window.location.pathname;
   const shareData = {
     title: 'Will you be my Valentine?',
@@ -141,26 +141,50 @@ btnShare.addEventListener('click', async () => {
     url: shareUrl,
   };
 
+  // Helper function to copy using fallback method
+  function fallbackCopy(text) {
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    textArea.style.position = 'fixed';
+    textArea.style.left = '-9999px';
+    document.body.appendChild(textArea);
+    textArea.select();
+    try {
+      document.execCommand('copy');
+      return true;
+    } catch {
+      return false;
+    } finally {
+      document.body.removeChild(textArea);
+    }
+  }
+
   try {
     if (navigator.share && isMobile) {
       await navigator.share(shareData);
-    } else {
+    } else if (navigator.clipboard && window.isSecureContext) {
       await navigator.clipboard.writeText(shareUrl);
-      btnShare.textContent = 'Link copied! 📋';
+      btnSend.textContent = 'Link copied! 📋';
       setTimeout(() => {
-        btnShare.textContent = 'Share with a friend 💌';
+        btnSend.textContent = 'Share with a friend 💌';
       }, 2000);
+    } else if (fallbackCopy(shareUrl)) {
+      btnSend.textContent = 'Link copied! 📋';
+      setTimeout(() => {
+        btnSend.textContent = 'Share with a friend 💌';
+      }, 2000);
+    } else {
+      prompt('Copy this link:', shareUrl);
     }
   } catch (err) {
-    // Fallback: copy to clipboard
-    try {
-      await navigator.clipboard.writeText(shareUrl);
-      btnShare.textContent = 'Link copied! 📋';
+    // Fallback to execCommand or prompt
+    if (fallbackCopy(shareUrl)) {
+      btnSend.textContent = 'Link copied! 📋';
       setTimeout(() => {
-        btnShare.textContent = 'Share with a friend 💌';
+        btnSend.textContent = 'Share with a friend 💌';
       }, 2000);
-    } catch {
-      btnShare.textContent = 'Copy: ' + shareUrl;
+    } else {
+      prompt('Copy this link:', shareUrl);
     }
   }
 });
